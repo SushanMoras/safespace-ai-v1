@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
   AlertTriangle,
@@ -18,6 +18,7 @@ import {
   Phone,
   ExternalLink,
   ShieldAlert,
+  Zap,
 } from 'lucide-react'
 import { SafeNav } from '@/components/safe-nav'
 import { RiskGauge } from '@/components/risk-gauge'
@@ -31,6 +32,103 @@ interface AnalysisResult {
   red_flags: string[]
   escalation_risk: 'low' | 'medium' | 'high'
   reasoning: string
+}
+
+// ─── Sample Scenarios ─────────────────────────────────────────────────────────
+
+interface SampleScenario {
+  id: string
+  label: string
+  messages: string
+}
+
+const SAMPLE_SCENARIOS: SampleScenario[] = [
+  {
+    id: 'stalking',
+    label: 'Stalking Scenario',
+    messages: `I saw you at the coffee shop today. Do you always go there?
+
+You look nice in that blue sweater you wore to the mall yesterday.
+
+I've been watching your Instagram. You went to the park at 3pm on Sunday. I was there too but you didn't see me.`,
+  },
+  {
+    id: 'blackmail',
+    label: 'Blackmail Scenario',
+    messages: `I have screenshots of your private messages to your ex. Send me $500 or I'm posting them.
+
+I'm serious. You have 24 hours. Everyone at your workplace will see what you said.
+
+I found more photos. The amount just went up to $1000. This is your final warning before I go public.`,
+  },
+  {
+    id: 'doxxing',
+    label: 'Doxxing Scenario',
+    messages: `Everyone should know you're a terrible person. Here's your home address: [Address]
+
+I'm posting your phone number, your parents' names, and where your sister works. Hope you're ready.
+
+I've shared your info with 50 people already. This is what you deserve for what you did.`,
+  },
+]
+
+// ─── Sample Scenario Dropdown ─────────────────────────────────────────────────
+
+function SampleScenarioDropdown({
+  onLoadScenario,
+  loading,
+}: {
+  onLoadScenario: (scenario: SampleScenario) => void
+  loading: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (scenario: SampleScenario) => {
+    onLoadScenario(scenario)
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        disabled={loading}
+        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground rounded-2xl px-6 py-3 font-semibold text-sm hover:bg-secondary/80 transition-all border border-border/60 hover:border-primary/30 disabled:opacity-40 disabled:cursor-not-allowed card-glow"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <Zap className="w-4 h-4" />
+        Load Sample
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-lg z-50 overflow-hidden">
+          <div className="p-2">
+            {SAMPLE_SCENARIOS.map((scenario) => (
+              <button
+                key={scenario.id}
+                onClick={() => handleSelect(scenario)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm hover:bg-muted/60 transition-colors text-foreground flex items-center gap-2"
+              >
+                <Zap className="w-3.5 h-3.5 text-primary opacity-60" />
+                {scenario.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Safe Reply Suggestions ───────────────────────────────────────────────────
@@ -439,6 +537,20 @@ export default function DashboardPage() {
   const [report, setReport] = useState<ReportData | null>(null)
   const [showReport, setShowReport] = useState(false)
 
+  function handleLoadScenario(scenario: SampleScenario) {
+    setText(scenario.messages)
+  }
+
+  useEffect(() => {
+    // Auto-trigger analyze after loading sample scenario
+    if (text && SAMPLE_SCENARIOS.some(s => s.messages === text)) {
+      const timer = setTimeout(() => {
+        handleAnalyze()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [text])
+
   async function handleAnalyze() {
     if (!text.trim()) return
     setLoading(true)
@@ -533,7 +645,7 @@ export default function DashboardPage() {
               {error}
             </p>
           )}
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-4 flex-wrap">
             <button
               onClick={handleAnalyze}
               disabled={!text.trim() || loading}
@@ -542,6 +654,7 @@ export default function DashboardPage() {
               <Search className="w-4 h-4" />
               {loading ? 'Analyzing…' : 'Analyze'}
             </button>
+            <SampleScenarioDropdown onLoadScenario={handleLoadScenario} loading={loading} />
             {analyzed && result && (
               <button
                 onClick={handleGenerateReport}
