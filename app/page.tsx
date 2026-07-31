@@ -24,6 +24,14 @@ export default function LandingPage() {
         />
 
         <div className="relative max-w-2xl mx-auto">
+          {/* Statistics badge */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-1.5 bg-muted/40 border border-border/40 rounded-full px-3.5 py-1.5">
+              <span className="text-xs text-foreground">1 in 3 women worldwide experience online harassment</span>
+              <span className="text-xs text-muted-foreground">· UN Women, 2023</span>
+            </div>
+          </div>
+
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-1.5 mb-8">
             <Heart className="w-3.5 h-3.5 text-primary fill-primary/40" />
