@@ -1,20 +1,63 @@
-export async function POST(req: Request) {
-  const { messages } = await req.json()
+interface PlatformMessage {
+  platform: string
+  messages: string
+}
 
-  if (!messages || typeof messages !== 'string' || !messages.trim()) {
+export async function POST(req: Request) {
+  const { messages, platforms } = await req.json()
+
+  // Support both single string (legacy) and multi-platform format
+  let platformsData: PlatformMessage[] = []
+  
+  if (platforms && Array.isArray(platforms)) {
+    platformsData = platforms
+  } else if (messages && typeof messages === 'string' && messages.trim()) {
+    platformsData = [{ platform: 'General', messages }]
+  } else {
     return Response.json({ error: 'messages_required' }, { status: 400 })
   }
 
-  const prompt = `Analyze these messages for online harassment targeting women.
-Messages: ${messages}
+  // Validate all platforms have messages
+  if (!platformsData.every(p => p.platform?.trim() && p.messages?.trim())) {
+    return Response.json({ error: 'invalid_platform_data' }, { status: 400 })
+  }
+
+  // Format messages for analysis
+  const messagesForAnalysis = platformsData
+    .map(p => `[${p.platform}]\n${p.messages}`)
+    .join('\n\n')
+
+  const hasCrossPlatform = platformsData.length >= 2
+
+  let prompt = `Analyze these messages for online harassment targeting women.
+Messages: ${messagesForAnalysis}
 Return ONLY valid JSON, no markdown fences:
 {
   "severity_score": 0-100,
   "category": "stalking|doxxing|blackmail|threat|grooming|harassment|none",
   "red_flags": ["short phrase", "short phrase"],
   "escalation_risk": "low|medium|high",
-  "reasoning": "one sentence, non-graphic"
+  "reasoning": "one sentence, non-graphic"`
+
+  if (hasCrossPlatform) {
+    const platformList = platformsData.map(p => p.platform).join(', ')
+    prompt += `,
+  "cross_platform_risk": {
+    "same_actor_likelihood": "low|medium|high",
+    "reasoning": "one sentence assessment of whether messages show same person/actor"
+  }`
+  }
+
+  prompt += `
 }`
+
+  // Add cross-platform instructions if applicable
+  if (hasCrossPlatform) {
+    prompt += `
+
+IMPORTANT: These messages came from different platforms: [${platformsData.map(p => p.platform).join(', ')}]. 
+Assess whether they show signs of being the same person/actor escalating across platforms (matching tone, phrasing, intensifying threats).`
+  }
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
