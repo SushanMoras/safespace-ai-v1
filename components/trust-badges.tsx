@@ -1,9 +1,9 @@
-import { Lock, UserX, HardDrive } from 'lucide-react'
+import { Lock, LogOut, Database, Eye } from 'lucide-react'
 
 const badges = [
-  { icon: UserX, label: '100% Anonymous', desc: 'No account needed' },
-  { icon: Lock, label: 'No Login Required', desc: 'Access immediately' },
-  { icon: HardDrive, label: 'Data Stays On Your Device', desc: 'Nothing is uploaded' },
+  { icon: Eye, label: 'Fully Anonymous', desc: 'No visibility' },
+  { icon: Database, label: 'Nothing Stored Externally', desc: 'Your device only' },
+  { icon: LogOut, label: 'Exit Instantly, Anytime', desc: 'You control it' },
 ]
 
 export function TrustBadges() {

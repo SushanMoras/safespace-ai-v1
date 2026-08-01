@@ -44,41 +44,41 @@
 
 :root {
   color-scheme: dark;
-  /* SafeSpace AI — dark theme */
-  --background: #0a0a0f;
+  /* SafeSpace AI — warm teal & amber theme */
+  --background: #0f0d0a;        /* near-black with warm brown undertone */
   --foreground: #e5e5e5;
-  --card: #151520;
+  --card: #181613;              /* warm dark brown */
   --card-foreground: #e5e5e5;
-  --popover: #151520;
+  --popover: #181613;
   --popover-foreground: #e5e5e5;
-  --primary: #3b6fd4;           /* deep blue accent */
-  --primary-foreground: #f0f4ff;
-  --secondary: #1a2340;         /* dark blue tint */
-  --secondary-foreground: #93b4e8;
+  --primary: #14b8a6;           /* deep teal */
+  --primary-foreground: #f0fdf9;
+  --secondary: #1a2a28;         /* teal-dark tint */
+  --secondary-foreground: #7dd3c0;
   --muted: #1c1c27;
   --muted-foreground: #8888aa;
-  --accent: #2a4a8a;            /* deep blue */
-  --accent-foreground: #93b4e8;
+  --accent: #f59e0b;            /* warm amber */
+  --accent-foreground: #78350f;
   --destructive: #7f1d1d;       /* muted red — severity only */
-  --border: #252535;
+  --border: #2a251f;            /* warm brown border */
   --input: #1c1c28;
-  --ring: #3b6fd4;
+  --ring: #14b8a6;              /* teal ring */
   --radius: 0.875rem;
 
   /* Severity gauge colors */
   --gauge-safe: #2d8a6e;        /* muted teal-green */
   --gauge-warn: #b87d20;        /* amber */
   --gauge-risk: #b91c1c;        /* red — high risk only */
-  --gauge-empty: #252535;
+  --gauge-empty: #2a251f;
 
   /* Chat bubble */
   --bubble-ai: #1c1c2e;
   --bubble-user: #1e3a8a;
 
   /* Glow effects */
-  --glow-primary: 0 0 20px rgba(59, 111, 212, 0.25);
-  --glow-primary-hover: 0 0 28px rgba(59, 111, 212, 0.4);
-  --glow-card: 0 0 0 1px rgba(59, 111, 212, 0.35);
+  --glow-primary: 0 0 20px rgba(20, 184, 166, 0.25);
+  --glow-primary-hover: 0 0 28px rgba(20, 184, 166, 0.4);
+  --glow-card: 0 0 0 1px rgba(20, 184, 166, 0.35);
 
   /* Sidebar tokens */
   --sidebar: #0d0d18;

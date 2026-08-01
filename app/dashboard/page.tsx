@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
   AlertTriangle,
@@ -18,6 +18,12 @@ import {
   Phone,
   ExternalLink,
   ShieldAlert,
+  Zap,
+  Plus,
+  X,
+  AlertCircle,
+  Network,
+  Brain,
 } from 'lucide-react'
 import { SafeNav } from '@/components/safe-nav'
 import { RiskGauge } from '@/components/risk-gauge'
@@ -25,12 +31,126 @@ import { ReportModal, type ReportData } from '@/components/report-modal'
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
+interface BehaviorPattern {
+  tactic: string
+  evidence: string
+  explanation: string
+}
+
 interface AnalysisResult {
   severity_score: number
   category: string
   red_flags: string[]
   escalation_risk: 'low' | 'medium' | 'high'
   reasoning: string
+  cross_platform_risk?: {
+    same_actor_likelihood: 'low' | 'medium' | 'high'
+    reasoning: string
+  }
+  behavior_patterns?: BehaviorPattern[]
+}
+
+interface PlatformMessage {
+  id: string
+  platform: string
+  messages: string
+}
+
+// ─── Sample Scenarios ─────────────────────────────────────────────────────────
+
+interface SampleScenario {
+  id: string
+  label: string
+  messages: string
+}
+
+const SAMPLE_SCENARIOS: SampleScenario[] = [
+  {
+    id: 'stalking',
+    label: 'Stalking Scenario',
+    messages: `I saw you at the coffee shop today. Do you always go there?
+
+You look nice in that blue sweater you wore to the mall yesterday.
+
+I've been watching your Instagram. You went to the park at 3pm on Sunday. I was there too but you didn't see me.`,
+  },
+  {
+    id: 'blackmail',
+    label: 'Blackmail Scenario',
+    messages: `I have screenshots of your private messages to your ex. Send me $500 or I'm posting them.
+
+I'm serious. You have 24 hours. Everyone at your workplace will see what you said.
+
+I found more photos. The amount just went up to $1000. This is your final warning before I go public.`,
+  },
+  {
+    id: 'doxxing',
+    label: 'Doxxing Scenario',
+    messages: `Everyone should know you're a terrible person. Here's your home address: [Address]
+
+I'm posting your phone number, your parents' names, and where your sister works. Hope you're ready.
+
+I've shared your info with 50 people already. This is what you deserve for what you did.`,
+  },
+]
+
+// ─── Sample Scenario Dropdown ─────────────────────────────────────────────────
+
+function SampleScenarioDropdown({
+  onLoadScenario,
+  loading,
+}: {
+  onLoadScenario: (scenario: SampleScenario) => void
+  loading: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (scenario: SampleScenario) => {
+    onLoadScenario(scenario)
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        disabled={loading}
+        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground rounded-2xl px-6 py-3 font-semibold text-sm hover:bg-secondary/80 transition-all border border-border/60 hover:border-primary/30 disabled:opacity-40 disabled:cursor-not-allowed card-glow"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <Zap className="w-4 h-4" />
+        Load Sample
+      </button>
+      {open && (
+        <div className="absolute left-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-lg z-50 overflow-hidden">
+          <div className="p-2">
+            {SAMPLE_SCENARIOS.map((scenario) => (
+              <button
+                key={scenario.id}
+                onClick={() => handleSelect(scenario)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm hover:bg-muted/60 transition-colors text-foreground flex items-center gap-2"
+              >
+                <Zap className="w-3.5 h-3.5 text-primary opacity-60" />
+                {scenario.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Safe Reply Suggestions ───────────────────────────────────────────────────
@@ -425,10 +545,82 @@ function GetHelpNow({ result }: { result: AnalysisResult }) {
   )
 }
 
+// ─── Behavior Pattern Analysis ───────────────────────────────────────────────
+
+function BehaviorPatternCard({ patterns }: { patterns: BehaviorPattern[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  if (!patterns || patterns.length === 0) {
+    return null
+  }
+
+  return (
+    <section
+      aria-label="Behavior pattern analysis"
+      className="bg-card rounded-3xl border border-border shadow-sm p-6 md:col-span-2 card-glow relative overflow-hidden"
+    >
+      {/* Pulsing accent line at top */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/0 via-primary/60 to-primary/0 animate-pulse" />
+
+      <div className="flex items-center gap-2 mb-5">
+        <Brain className="w-4 h-4 text-primary" />
+        <h2 className="text-sm font-semibold text-foreground">Behavior Pattern Analysis</h2>
+      </div>
+
+      <div className="space-y-2">
+        {patterns.map((pattern, index) => {
+          const isOpen = expanded === pattern.tactic
+          return (
+            <div
+              key={index}
+              className="rounded-2xl border border-border/60 bg-muted/30 p-4 transition-all hover:border-primary/30 hover:bg-muted/40"
+            >
+              <button
+                onClick={() => setExpanded(isOpen ? null : pattern.tactic)}
+                className="w-full flex items-center justify-between gap-2 text-left"
+                aria-expanded={isOpen}
+              >
+                <span className="text-sm font-semibold text-foreground">{pattern.tactic}</span>
+                {isOpen ? (
+                  <ChevronUp className="w-4 h-4 text-primary flex-shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                )}
+              </button>
+
+              {isOpen && (
+                <div className="mt-3 space-y-2 border-t border-border/40 pt-3">
+                  <div className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground/70 mb-1">Evidence:</p>
+                    <blockquote className="italic text-foreground/60 border-l-2 border-primary/40 pl-2 leading-relaxed">
+                      "{pattern.evidence}"
+                    </blockquote>
+                  </div>
+                  <p className="text-xs text-foreground/70 leading-relaxed">
+                    <span className="font-medium text-foreground">Why: </span>
+                    {pattern.explanation}
+                  </p>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mt-4 text-xs text-muted-foreground/60 border-t border-border/40 pt-3 leading-relaxed">
+        Pattern recognition is advisory only, based on established coercive control research — not a clinical assessment.
+      </p>
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [text, setText] = useState('')
+  const [platformBlocks, setPlatformBlocks] = useState<PlatformMessage[]>([
+    { id: '1', platform: '', messages: '' },
+  ])
+  const [activePlatformIndex, setActivePlatformIndex] = useState<number>(0)
   const [riskValue, setRiskValue] = useState<number | null>(null)
   const [flags, setFlags] = useState<string[]>([])
   const [analyzed, setAnalyzed] = useState(false)
@@ -439,8 +631,43 @@ export default function DashboardPage() {
   const [report, setReport] = useState<ReportData | null>(null)
   const [showReport, setShowReport] = useState(false)
 
+  function handleLoadScenario(scenario: SampleScenario) {
+    // Fill the active platform's textarea using index
+    setPlatformBlocks(prev => {
+      const newBlocks = [...prev]
+      newBlocks[activePlatformIndex] = {
+        ...newBlocks[activePlatformIndex],
+        messages: scenario.messages
+      }
+      return newBlocks
+    })
+  }
+
+  function handlePlatformChange(id: string, platform: string) {
+    setPlatformBlocks(prev => prev.map(p => p.id === id ? { ...p, platform } : p))
+  }
+
+  function handleMessagesChange(id: string, messages: string) {
+    setPlatformBlocks(prev => prev.map(p => p.id === id ? { ...p, messages } : p))
+  }
+
+  function handleAddPlatform() {
+    if (platformBlocks.length < 3) {
+      const newId = Math.max(0, ...platformBlocks.map(p => parseInt(p.id))) + 1
+      setPlatformBlocks(prev => [...prev, { id: newId.toString(), platform: '', messages: '' }])
+    }
+  }
+
+  function handleRemovePlatform(id: string) {
+    if (platformBlocks.length > 1) {
+      setPlatformBlocks(prev => prev.filter(p => p.id !== id))
+    }
+  }
+
   async function handleAnalyze() {
-    if (!text.trim()) return
+    const validBlocks = platformBlocks.filter(p => p.messages.trim())
+    if (validBlocks.length === 0) return
+
     setLoading(true)
     setError(null)
     setResult(null)
@@ -452,7 +679,7 @@ export default function DashboardPage() {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: text }),
+        body: JSON.stringify({ platforms: validBlocks }),
       })
       const data = await res.json()
 
@@ -479,10 +706,12 @@ export default function DashboardPage() {
     if (!result) return
     setReportLoading(true)
     try {
+      const validBlocks = platformBlocks.filter(p => p.messages.trim())
+      const messagesText = validBlocks.map(p => `[${p.platform}]\n${p.messages}`).join('\n\n')
       const res = await fetch('/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: text, analysis: result, chatHistory: [] }),
+        body: JSON.stringify({ messages: messagesText, analysis: result, chatHistory: [] }),
       })
       const data = await res.json()
       if (data.error) {
@@ -517,31 +746,74 @@ export default function DashboardPage() {
           aria-label="Message input"
           className="bg-card rounded-3xl border border-border shadow-sm p-6 mb-6 card-glow"
         >
-          <label htmlFor="message-input" className="block text-sm font-medium text-foreground mb-3">
+          <label className="block text-sm font-medium text-foreground mb-4">
             Paste the messages you received
           </label>
-          <textarea
-            id="message-input"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Copy and paste the messages here. You can include usernames, timestamps, or any context that feels relevant. Nothing leaves this page."
-            rows={7}
-            className="w-full rounded-2xl bg-muted/60 border border-input text-foreground placeholder:text-muted-foreground/50 text-sm leading-relaxed resize-none p-4 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-shadow"
-          />
+
+          {/* Platform blocks */}
+          <div className="space-y-4 mb-4">
+            {platformBlocks.map((block, index) => (
+              <div key={block.id} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <label htmlFor={`platform-${block.id}`} className="text-xs font-medium text-muted-foreground">
+                    Platform {index + 1}
+                  </label>
+                  {platformBlocks.length > 1 && (
+                    <button
+                      onClick={() => handleRemovePlatform(block.id)}
+                      className="ml-auto p-1 hover:bg-destructive/10 rounded text-destructive/60 hover:text-destructive transition-colors"
+                      aria-label={`Remove platform ${index + 1}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  id={`platform-${block.id}`}
+                  type="text"
+                  value={block.platform}
+                  onChange={(e) => handlePlatformChange(block.id, e.target.value)}
+                  placeholder="e.g., Instagram DM, WhatsApp, Email"
+                  className="w-full rounded-lg bg-muted/60 border border-input text-foreground placeholder:text-muted-foreground/50 text-sm p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-shadow"
+                />
+                <textarea
+                  value={block.messages}
+                  onChange={(e) => handleMessagesChange(block.id, e.target.value)}
+                  onFocus={() => setActivePlatformIndex(index)}
+                  placeholder="Copy and paste messages here. You can include usernames, timestamps, or context. Nothing leaves this page."
+                  rows={4}
+                  className="w-full rounded-lg bg-muted/60 border border-input text-foreground placeholder:text-muted-foreground/50 text-sm leading-relaxed resize-none p-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-shadow"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Add another platform button */}
+          {platformBlocks.length < 3 && (
+            <button
+              onClick={handleAddPlatform}
+              className="w-full flex items-center justify-center gap-2 bg-muted/40 border border-dashed border-border/60 rounded-lg py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted/60 hover:border-border transition-colors mb-4"
+            >
+              <Plus className="w-4 h-4" />
+              Add another platform
+            </button>
+          )}
+
           {error && (
             <p className="mt-3 text-xs text-red-400 bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-2 leading-relaxed">
               {error}
             </p>
           )}
-          <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-4 flex-wrap">
             <button
               onClick={handleAnalyze}
-              disabled={!text.trim() || loading}
+              disabled={!platformBlocks.some(p => p.messages.trim()) || loading}
               className="flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl px-6 py-3 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed btn-glow btn-primary-hover"
             >
               <Search className="w-4 h-4" />
               {loading ? 'Analyzing…' : 'Analyze'}
             </button>
+            <SampleScenarioDropdown onLoadScenario={handleLoadScenario} loading={loading} />
             {analyzed && result && (
               <button
                 onClick={handleGenerateReport}
@@ -620,6 +892,63 @@ export default function DashboardPage() {
             )}
           </section>
 
+          {/* Cross-Platform Pattern card */}
+          {analyzed && platformBlocks.filter(p => p.messages.trim()).length >= 2 && result?.cross_platform_risk && (
+            <section
+              aria-label="Cross-platform pattern analysis"
+              className="bg-card rounded-3xl border border-border shadow-sm p-6 md:col-span-2 card-glow"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Network className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground">Cross-Platform Pattern</h2>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 ${
+                    result.cross_platform_risk.same_actor_likelihood === 'high'
+                      ? 'bg-red-500/20 text-red-400'
+                      : result.cross_platform_risk.same_actor_likelihood === 'medium'
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'bg-green-500/20 text-green-400'
+                  }`}
+                >
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span
+                      className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        result.cross_platform_risk.same_actor_likelihood === 'high'
+                          ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                          : result.cross_platform_risk.same_actor_likelihood === 'medium'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                      }`}
+                    >
+                      {result.cross_platform_risk.same_actor_likelihood === 'high'
+                        ? 'High Risk'
+                        : result.cross_platform_risk.same_actor_likelihood === 'medium'
+                          ? 'Medium Risk'
+                          : 'Low Risk'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {result.cross_platform_risk.reasoning}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Analyzed {platformBlocks.filter(p => p.messages.trim()).map(p => p.platform).join(', ')}
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Behavior Pattern Analysis card */}
+          {analyzed && result?.behavior_patterns && result.behavior_patterns.length > 0 && (
+            <BehaviorPatternCard patterns={result.behavior_patterns} />
+          )}
+
           {/* Safe Reply Suggestions card */}
           <section
             aria-label="Safe reply suggestions"
@@ -664,7 +993,7 @@ export default function DashboardPage() {
       </div>
 
       {showReport && report && (
-        <ReportModal report={report} onClose={() => setShowReport(false)} />
+        <ReportModal report={report} severityScore={result?.severity_score} onClose={() => setShowReport(false)} />
       )}
     </main>
   )
