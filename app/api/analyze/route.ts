@@ -24,13 +24,16 @@ export async function POST(req: Request) {
   }
 
   // Validate all platforms have messages
-  if (!platformsData.every(p => p.platform?.trim() && p.messages?.trim())) {
+  if (!platformsData.every(p => p.messages?.trim())) {
     return Response.json({ error: 'invalid_platform_data' }, { status: 400 })
   }
 
-  // Format messages for analysis
+  // Format messages for analysis (platform labels optional)
   const messagesForAnalysis = platformsData
-    .map(p => `[${p.platform}]\n${p.messages}`)
+    .map(p => {
+      const platformLabel = p.platform?.trim() ? `[${p.platform}]\n` : ''
+      return platformLabel + p.messages
+    })
     .join('\n\n')
 
   const hasCrossPlatform = platformsData.length >= 2
