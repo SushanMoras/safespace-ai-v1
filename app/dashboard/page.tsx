@@ -620,7 +620,7 @@ export default function DashboardPage() {
   const [platformBlocks, setPlatformBlocks] = useState<PlatformMessage[]>([
     { id: '1', platform: '', messages: '' },
   ])
-  const [focusedPlatformId, setFocusedPlatformId] = useState<string | null>(null)
+  const [activePlatformIndex, setActivePlatformIndex] = useState<number>(0)
   const [riskValue, setRiskValue] = useState<number | null>(null)
   const [flags, setFlags] = useState<string[]>([])
   const [analyzed, setAnalyzed] = useState(false)
@@ -632,11 +632,15 @@ export default function DashboardPage() {
   const [showReport, setShowReport] = useState(false)
 
   function handleLoadScenario(scenario: SampleScenario) {
-    // Fill the focused platform's textarea, or default to Platform 1
-    const targetId = focusedPlatformId || '1'
-    setPlatformBlocks(prev =>
-      prev.map(p => p.id === targetId ? { ...p, messages: scenario.messages } : p)
-    )
+    // Fill the active platform's textarea using index
+    setPlatformBlocks(prev => {
+      const newBlocks = [...prev]
+      newBlocks[activePlatformIndex] = {
+        ...newBlocks[activePlatformIndex],
+        messages: scenario.messages
+      }
+      return newBlocks
+    })
   }
 
   function handlePlatformChange(id: string, platform: string) {
@@ -775,8 +779,7 @@ export default function DashboardPage() {
                 <textarea
                   value={block.messages}
                   onChange={(e) => handleMessagesChange(block.id, e.target.value)}
-                  onFocus={() => setFocusedPlatformId(block.id)}
-                  onBlur={() => setFocusedPlatformId(null)}
+                  onFocus={() => setActivePlatformIndex(index)}
                   placeholder="Copy and paste messages here. You can include usernames, timestamps, or context. Nothing leaves this page."
                   rows={4}
                   className="w-full rounded-lg bg-muted/60 border border-input text-foreground placeholder:text-muted-foreground/50 text-sm leading-relaxed resize-none p-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-shadow"
