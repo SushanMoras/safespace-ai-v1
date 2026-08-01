@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Download, Loader2, AlertCircle, Clock, Tag, CheckCircle } from 'lucide-react'
+import { X, Download, Loader2, AlertCircle, Clock, Tag, CheckCircle, AlertTriangle } from 'lucide-react'
 
 export interface ReportData {
   incident_summary: string
@@ -13,6 +13,7 @@ export interface ReportData {
 
 interface ReportModalProps {
   report: ReportData
+  severityScore?: number
   onClose: () => void
 }
 
@@ -22,8 +23,34 @@ const SEVERITY_COLOR: Record<string, string> = {
   High: 'text-red-400 bg-red-400/10 border-red-400/30',
 }
 
-export function ReportModal({ report, onClose }: ReportModalProps) {
+export function ReportModal({ report, severityScore, onClose }: ReportModalProps) {
   const [exporting, setExporting] = useState(false)
+
+  // Determine triage priority based on severity_score
+  const getTriagePriority = (score?: number) => {
+    if (score === undefined || score === null) return null
+    if (score >= 71) {
+      return {
+        label: 'Immediate Safety Concern',
+        color: 'text-red-400 bg-red-400/10 border-red-400/30',
+        icon: 'alert',
+      }
+    } else if (score >= 41) {
+      return {
+        label: 'Documentation Recommended',
+        color: 'text-amber-400 bg-amber-400/10 border-amber-400/30',
+        icon: 'warning',
+      }
+    } else {
+      return {
+        label: 'Low Priority — Monitor',
+        color: 'text-green-400 bg-green-400/10 border-green-400/30',
+        icon: 'check',
+      }
+    }
+  }
+
+  const triagePriority = getTriagePriority(severityScore)
 
   async function handleExportPDF() {
     setExporting(true)
@@ -170,6 +197,18 @@ export function ReportModal({ report, onClose }: ReportModalProps) {
 
         {/* Modal body */}
         <div className="flex flex-col gap-6 p-6">
+          {/* Triage Priority Badge */}
+          {triagePriority && (
+            <div
+              className={`flex items-center gap-2.5 rounded-2xl border p-4 ${triagePriority.color}`}
+            >
+              {triagePriority.icon === 'alert' && <AlertTriangle className="w-4 h-4 flex-shrink-0" />}
+              {triagePriority.icon === 'warning' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+              {triagePriority.icon === 'check' && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
+              <span className="text-sm font-semibold">{triagePriority.label}</span>
+            </div>
+          )}
+
           {/* Classification + Severity */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-muted/40 rounded-2xl border border-border/60 p-4 flex flex-col gap-1">

@@ -901,7 +901,7 @@ export default function DashboardPage() {
       </div>
 
       {showReport && report && (
-        <ReportModal report={report} onClose={() => setShowReport(false)} />
+        <ReportModal report={report} severityScore={result?.severity_score} onClose={() => setShowReport(false)} />
       )}
     </main>
   )
