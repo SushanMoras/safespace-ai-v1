@@ -112,6 +112,43 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section className="relative z-10 px-6 py-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center gap-6 md:gap-8">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center mb-2">
+                <span className="text-sm font-semibold text-primary">1</span>
+              </div>
+              <p className="text-xs font-medium text-foreground text-center max-w-[80px]">Share what happened</p>
+            </div>
+
+            {/* Connector line */}
+            <div className="flex-1 h-0.5 bg-border/40 mb-6 hidden md:block" />
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center mb-2">
+                <span className="text-sm font-semibold text-primary">2</span>
+              </div>
+              <p className="text-xs font-medium text-foreground text-center max-w-[80px]">Get instant analysis</p>
+            </div>
+
+            {/* Connector line */}
+            <div className="flex-1 h-0.5 bg-border/40 mb-6 hidden md:block" />
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center mb-2">
+                <span className="text-sm font-semibold text-primary">3</span>
+              </div>
+              <p className="text-xs font-medium text-foreground text-center max-w-[80px]">Get support & act</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer note */}
       <footer className="relative z-10 text-center pb-8 px-6">
         <p className="text-xs text-muted-foreground">
