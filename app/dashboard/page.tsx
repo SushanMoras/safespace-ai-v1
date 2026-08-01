@@ -23,12 +23,19 @@ import {
   X,
   AlertCircle,
   Network,
+  Brain,
 } from 'lucide-react'
 import { SafeNav } from '@/components/safe-nav'
 import { RiskGauge } from '@/components/risk-gauge'
 import { ReportModal, type ReportData } from '@/components/report-modal'
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
+
+interface BehaviorPattern {
+  tactic: string
+  evidence: string
+  explanation: string
+}
 
 interface AnalysisResult {
   severity_score: number
@@ -40,6 +47,7 @@ interface AnalysisResult {
     same_actor_likelihood: 'low' | 'medium' | 'high'
     reasoning: string
   }
+  behavior_patterns?: BehaviorPattern[]
 }
 
 interface PlatformMessage {
@@ -537,6 +545,75 @@ function GetHelpNow({ result }: { result: AnalysisResult }) {
   )
 }
 
+// ─── Behavior Pattern Analysis ───────────────────────────────────────────────
+
+function BehaviorPatternCard({ patterns }: { patterns: BehaviorPattern[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  if (!patterns || patterns.length === 0) {
+    return null
+  }
+
+  return (
+    <section
+      aria-label="Behavior pattern analysis"
+      className="bg-card rounded-3xl border border-border shadow-sm p-6 md:col-span-2 card-glow relative overflow-hidden"
+    >
+      {/* Pulsing accent line at top */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/0 via-primary/60 to-primary/0 animate-pulse" />
+
+      <div className="flex items-center gap-2 mb-5">
+        <Brain className="w-4 h-4 text-primary" />
+        <h2 className="text-sm font-semibold text-foreground">Behavior Pattern Analysis</h2>
+      </div>
+
+      <div className="space-y-2">
+        {patterns.map((pattern, index) => {
+          const isOpen = expanded === pattern.tactic
+          return (
+            <div
+              key={index}
+              className="rounded-2xl border border-border/60 bg-muted/30 p-4 transition-all hover:border-primary/30 hover:bg-muted/40"
+            >
+              <button
+                onClick={() => setExpanded(isOpen ? null : pattern.tactic)}
+                className="w-full flex items-center justify-between gap-2 text-left"
+                aria-expanded={isOpen}
+              >
+                <span className="text-sm font-semibold text-foreground">{pattern.tactic}</span>
+                {isOpen ? (
+                  <ChevronUp className="w-4 h-4 text-primary flex-shrink-0" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                )}
+              </button>
+
+              {isOpen && (
+                <div className="mt-3 space-y-2 border-t border-border/40 pt-3">
+                  <div className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground/70 mb-1">Evidence:</p>
+                    <blockquote className="italic text-foreground/60 border-l-2 border-primary/40 pl-2 leading-relaxed">
+                      "{pattern.evidence}"
+                    </blockquote>
+                  </div>
+                  <p className="text-xs text-foreground/70 leading-relaxed">
+                    <span className="font-medium text-foreground">Why: </span>
+                    {pattern.explanation}
+                  </p>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <p className="mt-4 text-xs text-muted-foreground/60 border-t border-border/40 pt-3 leading-relaxed">
+        Pattern recognition is advisory only, based on established coercive control research — not a clinical assessment.
+      </p>
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -855,6 +932,11 @@ export default function DashboardPage() {
                 </div>
               </div>
             </section>
+          )}
+
+          {/* Behavior Pattern Analysis card */}
+          {analyzed && result?.behavior_patterns && result.behavior_patterns.length > 0 && (
+            <BehaviorPatternCard patterns={result.behavior_patterns} />
           )}
 
           {/* Safe Reply Suggestions card */}

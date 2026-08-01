@@ -3,6 +3,12 @@ interface PlatformMessage {
   messages: string
 }
 
+interface BehaviorPattern {
+  tactic: string
+  evidence: string
+  explanation: string
+}
+
 export async function POST(req: Request) {
   const { messages, platforms } = await req.json()
 
@@ -37,7 +43,10 @@ Return ONLY valid JSON, no markdown fences:
   "category": "stalking|doxxing|blackmail|threat|grooming|harassment|none",
   "red_flags": ["short phrase", "short phrase"],
   "escalation_risk": "low|medium|high",
-  "reasoning": "one sentence, non-graphic"`
+  "reasoning": "one sentence, non-graphic",
+  "behavior_patterns": [
+    {"tactic": "short name e.g. Surveillance/Monitoring", "evidence": "1 short quote or paraphrase from messages", "explanation": "1 sentence on why this is a recognized manipulation/control tactic"}
+  ]`
 
   if (hasCrossPlatform) {
     const platformList = platformsData.map(p => p.platform).join(', ')
@@ -50,6 +59,11 @@ Return ONLY valid JSON, no markdown fences:
 
   prompt += `
 }`
+
+  // Add behavior pattern analysis instructions
+  prompt += `
+
+Additionally, identify any recognized coercive control or manipulation tactics present in these messages (e.g., love-bombing, isolation tactics, gaslighting, intermittent reinforcement, surveillance/monitoring, threats escalation, guilt-tripping). Only include tactics with clear textual evidence — do not speculate.`
 
   // Add cross-platform instructions if applicable
   if (hasCrossPlatform) {
